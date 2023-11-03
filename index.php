@@ -48,7 +48,12 @@ try{
             $eligibility = fetchEligibility($conn, $phoneNumber);
             $response = "CON Your eligibility amount: $eligibility\n";
         }
-    } 
+    }else if ($text == "4") {
+        // User selected "Unsubscribe"
+        // Call the unsubscribe function to change subscription status to 0
+        unsubscribeUser($conn, $phoneNumber);
+        $response = "END You have been unsubscribed. Thank you for using our service.\n";
+    }
     elseif ($text == "1") {
         // Check if the user has a valid PIN
         $isValidPin = true;
@@ -82,7 +87,7 @@ try{
     }else if ($text == "2*1*1") {
         // Show Utilities options
         $response  = "CON Select Utility Provider\n";
-        $response .= "1. Pay Yaka\n";
+        $response .= "1. Get Yaka\n";
         $response .= "2. Pay Bill\n";
     }
     else if ($text == "2*1*2") {
@@ -107,7 +112,7 @@ try{
         $response  = "CON Select Gas Provider\n";
         $response .= "1. Shell\n";
         $response .= "2. Total\n";
-        $response .= "3. Moga\n";
+        $response .= "3. Mogas\n";
     
     }else if (strpos($text, "2*1*1*1") === 0) { // User selected "Utilities" and "Umeme" and entered account number
         $accountNumber = substr($text, 8); // Extract the account number
@@ -122,7 +127,7 @@ try{
         $accountLoan = substr($text, 6); // Extract the account number and loan amount together
         list($accountNumber, $loanAmount) = explode("*", $accountLoan);
     
-        // Make sure to validate $accountNumber and $loanAmount as needed here
+        
     
         if ($accountNumber != "" && is_numeric($loanAmount) && (float)$loanAmount > 0) {
             // Check if the loan amount is valid and the user is eligible
@@ -144,6 +149,37 @@ try{
             $response = "END Invalid input. Please enter a valid account number and loan amount.\n";
         }
     }
+    elseif (strpos($text, "2*1*1*2") === 0) {
+        $inputParts = explode('*', $text);
+        
+        if (count($inputParts) === 5) {
+            // User provided both account number and loan amount
+            $accountNumber = $inputParts[3]; // Extract the account number
+            $loanAmount = $inputParts[4]; // Extract the loan amount
+    
+            if ($accountNumber != "" && is_numeric($loanAmount) && (float)$loanAmount > 0) {
+                // Check if the loan amount is valid and the user is eligible
+                // You should implement logic to check eligibility here if needed
+    
+                // Call the takeLoan function to process the loan request
+                $loanResult = takeLoan($conn, $phoneNumber, (float)$loanAmount);
+    
+                if ($loanResult) {
+                    // Loan request was successful
+                    $response = "END Your loan request of Ugx $loanAmount has been approved and credited to account $accountNumber. Thank you!\n";
+                } else {
+                    // Loan request failed for some reason
+                    $response = "END Loan request failed. Please try again later or contact customer support.\n";
+                }
+            } else {
+                // Invalid input for account number or loan amount
+                $response = "END Invalid input. Please enter a valid account number and loan amount.\n";
+            }
+        } else {
+            // Prompt the user to enter both the account number and loan amount
+            $response = "CON Enter the account number and loan amount in the format: AccountNumber*LoanAmount:\n";
+        }
+    }    
     
     elseif ($text == "3") {
         // Handle loan repayment menu

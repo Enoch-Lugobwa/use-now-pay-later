@@ -25,16 +25,15 @@ function checkUserExistence($conn, $phoneNumber) {
 
 // Function to subscribe the user
 function subscribeUser($conn, $phoneNumber) {
-    $defaultPin = "1234"; // Default PIN
     
     if (checkUserExistence($conn, $phoneNumber)) {
         // User already exists, update subscription status and default PIN
-        $stmt = $conn->prepare("UPDATE users SET is_subscribed = 1, pin = ? WHERE phone_number = ?");
-        $stmt->bind_param("ss", $defaultPin, $phoneNumber);
+        $stmt = $conn->prepare("UPDATE users SET is_subscribed = 1 WHERE phone_number = ?");
+        $stmt->bind_param("s", $phoneNumber);
     } else {
         // User doesn't exist, insert a new record with subscription status and default PIN
-        $stmt = $conn->prepare("INSERT INTO users (phone_number, is_subscribed, loan_amount, eligibility, pin) VALUES (?, 1, 0, 150000, ?)");
-        $stmt->bind_param("ss", $phoneNumber, $defaultPin);
+        $stmt = $conn->prepare("INSERT INTO users (phone_number, is_subscribed, loan_amount, eligibility) VALUES (?, 1, 0, 150000)");
+        $stmt->bind_param("s", $phoneNumber);
     }
     $stmt->execute();
     $stmt->close();
@@ -68,19 +67,66 @@ function fetchLoanAmount($conn, $phoneNumber) {
     return $loanAmount;
 }
 
-// Function to deduct the full loan amount
-function deductFullLoanAmount($conn, $phoneNumber, $loanAmount) {
-    // Implement the logic to deduct the full loan amount from the user's account
-    // This may involve updating the database and performing financial transactions
-    // Return true if deduction is successful, false otherwise
+// Function to perform a full loan payment
+function fullLoanPayment($conn, $phoneNumber, $amountPaid) {
+    // Get the current loan amount and eligibility amount
+    $currentLoanAmount = fetchLoanAmount($conn, $phoneNumber);
+    $currentEligibility = fetchEligibility($conn, $phoneNumber);
+
+    // Calculate the new loan amount after deduction
+    $newLoanAmount = $currentLoanAmount - $amountPaid;
+
+    // Calculate the new eligibility amount after increment
+    $newEligibility = $currentEligibility + $amountPaid;
+
+    // Check if the new loan amount is zero or negative
+    if ($newLoanAmount <= 0) {
+        // If the loan is fully paid, set loan amount to 0
+        $newLoanAmount = 0;
+
+    }
+
+    // Update the loan amount and eligibility in the database
+    $stmt = $conn->prepare("UPDATE users SET loan_amount = ?, eligibility = ? WHERE phone_number = ?");
+    $stmt->bind_param("dds", $newLoanAmount, $newEligibility, $phoneNumber);
+    $stmt->execute();
+    $stmt->close();
+
+    // Return true to indicate a successful full loan payment
+    return true;
 }
 
-// Function to make partial loan repayment
+
+// Function to make a partial loan repayment
 function makePartialRepayment($conn, $phoneNumber, $partialRepaymentAmount) {
-    // Implement the logic to make a partial loan repayment
-    // This may involve updating the database and performing financial transactions
-    // Return true if the partial repayment is successful, false otherwise
+    // Get the current loan amount
+    $currentLoanAmount = fetchLoanAmount($conn, $phoneNumber);
+
+    // Check if the user has an outstanding loan
+    if ($currentLoanAmount <= 0) {
+        // No outstanding loan, return false to indicate failure
+        return false;
+    }
+
+    // Calculate the new loan amount after deducting the partial repayment
+    $newLoanAmount = $currentLoanAmount - $partialRepaymentAmount;
+
+    // Ensure the new loan amount is not negative
+    if ($newLoanAmount < 0) {
+        $newLoanAmount = 0;
+    }
+
+    // Update the loan amount in the database
+    $stmt = $conn->prepare("UPDATE users SET loan_amount = ? WHERE phone_number = ?");
+    $stmt->bind_param("ds", $newLoanAmount, $phoneNumber);
+    $stmt->execute();
+    $stmt->close();
+
+    // Return true to indicate a successful partial repayment
+    return true;
 }
+
+
 // Function to unsubscribe the user
 function unsubscribeUser($conn, $phoneNumber) {
     $stmt = $conn->prepare("UPDATE users SET is_subscribed = 0 WHERE phone_number = ?");
@@ -88,18 +134,7 @@ function unsubscribeUser($conn, $phoneNumber) {
     $stmt->execute();
     $stmt->close();
 }
-// Function to verify PIN against the database PIN
-function verifyPin($conn, $phoneNumber, $pin) {
-    $stmt = $conn->prepare("SELECT pin FROM users WHERE phone_number = ?");
-    $stmt->bind_param("s", $phoneNumber);
-    $stmt->execute();
-    $stmt->bind_result($dbPin);
-    $stmt->fetch();
-    $stmt->close();
 
-    // Verify the entered PIN against the database PIN
-    return ($pin === $dbPin);
-}
 
 function generateMainMenu() {
     $response  = "CON Main Menu\n";
@@ -151,6 +186,49 @@ function fetchUserPin($conn, $phoneNumber) {
 
     return $pin;
 }
+// Function to take a loan and update eligibility
+function takeLoan($conn, $phoneNumber, $loanAmount) {
+    // Check if the loan amount is greater than 0
+    if ($loanAmount > 0) {
+        // Implement the logic to process the loan request here
+        // You can update the user's loan balance, perform financial transactions, and more
+        
+        // For example, you can update the user's loan balance in the database
+        $stmt = $conn->prepare("UPDATE users SET loan_amount = loan_amount + ? WHERE phone_number = ?");
+        $stmt->bind_param("ds", $loanAmount, $phoneNumber);
+        $stmt->execute();
+        $stmt->close();
+
+        // Update eligibility amount
+        $eligibility = fetchEligibility($conn, $phoneNumber); // Get the current eligibility
+        $newEligibility = $eligibility - $loanAmount; // Reduce eligibility by the loan amount
+
+        // Ensure the new eligibility is not less than 0
+        if ($newEligibility < 0) {
+            $newEligibility = 0;
+        }
+
+        // Update the eligibility in the database
+        $stmt = $conn->prepare("UPDATE users SET eligibility = ? WHERE phone_number = ?");
+        $stmt->bind_param("ds", $newEligibility, $phoneNumber);
+        $stmt->execute();
+        $stmt->close();
+
+        // Return true to indicate a successful loan request
+        return true;
+    } else {
+        // Loan amount is invalid (less than or equal to 0)
+        return false;
+    }
+}
+
+
+
+
+
+
+
+
 
 
 

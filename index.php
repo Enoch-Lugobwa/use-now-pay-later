@@ -6,7 +6,6 @@ $phoneNumber = $_POST["phoneNumber"];
 $text        = $_POST["text"];
 
 require_once('functions.php');
-
 // Initialize the USSD response
 $response = "";
 
@@ -18,7 +17,7 @@ if ($text == "") {
     // Go back to the main menu
     $response = generateMainMenu();
 
-} elseif (is_numeric($text) && strlen($text) == 5) {
+}elseif (is_numeric($text) && strlen($text) == 5) {
     // User entered a 4-digit PIN
     //$dbPin = verifyPin($conn, $phoneNumber, $text);
 
@@ -30,15 +29,15 @@ if ($text == "") {
         // If the entered PIN is incorrect, show an error message
         //$response = "END Invalid PIN. Please try again.\n";
     //}
-}else if ($text == "1") {
+}elseif ($text == "0*1") {
     // Check if the user has a valid PIN
     $isValidPin = true;
 
-    // Prompt the user to enter their PIN
+    // Prompt the user to enter their 4-digit PIN
     $response = "CON Please enter your 4-digit PIN to check eligibility:\n";
     
+    // Check if the user entered a valid PIN
     if (is_numeric($text) && strlen($text) == 4) {
-        // User entered a 4-digit PIN
         $isValidPin = verifyPin($conn, $phoneNumber, $text);
     }
 
@@ -48,160 +47,175 @@ if ($text == "") {
         $response = "CON Your eligibility amount: $eligibility\n";
         $response .= "0. Go back to Main Menu\n";
     }
-    // If the PIN is not valid, it will still be in the "CON" state, and the user can retry.
-}else if ($text == "4") {
-    // User selected "Unsubscribe"
-    // Call the unsubscribe function to change subscription status to 0
-    unsubscribeUser($conn, $phoneNumber);
-    $response = "END You have been unsubscribed. Thank you for using our service.\n";
-}else if ($text == "2") { // User selected "Request Loan"
+} 
+elseif ($text == "1") {
+    // Check if the user has a valid PIN
+    $isValidPin = true;
+
+    // Prompt the user to enter their 4-digit PIN
+    $response = "CON Please enter your 4-digit PIN to check eligibility:\n";
+    
+    // Check if the user entered a valid PIN
+    if (is_numeric($text) && strlen($text) == 4) {
+        $isValidPin = verifyPin($conn, $phoneNumber, $text);
+    }
+
+    if ($isValidPin) {
+        // PIN is valid, check eligibility and provide a response
+        $eligibility = fetchEligibility($conn, $phoneNumber);
+        $response = "CON Your eligibility amount: $eligibility\n";
+        $response .= "0. Go back to Main Menu\n";
+    }
+} else if ($text == "2") {
     // Show Service request categories
     $response  = "CON Select Service Category\n";
     $response .= "1. Utilities\n";
     $response .= "2. Pay TV\n";
     $response .= "3. Gas\n";
-} else if ($text == "2*1") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Select Service\n";
+} // Add Utilities submenu
+else if ($text == "2*1") {
+    // Show Utilities options
+    $response  = "CON Select Utility Provider\n";
     $response .= "1. Umeme\n";
     $response .= "2. NWSC\n";
-    $response .= "3. Solar\n";
-}else if ($text == "2*1*1") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Select Service\n";
-    $response .= "1. Yaka\n";
-    $response .= "2. Bill\n";
-}else if ($text == "2*1*1*1") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Enter Yaka Meter Number:\n";
-  
-}else if ($text == "2*1*1*2") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Enter Acc No:\n";
-  
-}else if ($text == "2*1*2") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Enter Acc No:\n";
-  
-}else if ($text == "2*1*2") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Select Service ";
-   $response .= "1. Umeme\n";
-   $response .= "2. NWSC\n";
-   $response .= "3. Solar\n";
-  
-}else if ($text == "2*1*3") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Select Service\n ";
-   $response .= "1. Solar Now\n";
-   $response .= "2. M-Kopa Solar\n";
-  
-}else if ($text == "2*2") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Select Service\n ";
-   $response .= "1. DSTV\n";
-   $response .= "2. GOTV\n";
-   $response .= "3. Azam TV\n";
-   $response .= "4. Star Times\n";
-   $reponsse .= "5. YOTV\n";
-  
-}else if ($text == "2*2*1") { // User selected "Utilities" and "Umeme"
-   $response  = "CON Select Package\n ";
-   $response .= "1. Lumba 16000/-\n";
-   $response .= "2. Access 43000/-\n";
-   $response .= "3. Family 64000/-\n";
-   $response .= "4. Compact 104000/-\n";
-   $response .= "5. Compact Plus 160000/-\n";
-  
-}else if ($text == "2*2*2") { // User selected "Utilities" and "Umeme"
-    $response  = "CON Select Package\n ";
-    $response .= "1. Lite 15000/- \n";
-    $response .= "2. Value 21000/-\n";
-    $response .= "3. Plus 33000/-\n";
-    $response .= "4. Max 49000/-\n";
-    $response .= "5. Supa 64000/-\n";
-    $response .= "6. Supa+ 104000/-\n";
+}else if ($text == "2*1*1") {
+    // Show Utilities options
+    $response  = "CON Select Utility Provider\n";
+    $response .= "1. Pay Yaka\n";
+    $response .= "2. Pay Bill\n";
+}
+else if ($text == "2*1*2") {
+    // Show Utilities options
+    $response  = "CON Select Utility Provider\n";
+    $response .= "1. Pay Bill\n";
     
-   
- }else if ($text == "2*2*4") { // User selected "Utilities" and "Umeme"
-    $response  = "CON Select Services\n ";
-    $response .= "1. Daily \n";
-    $response .= "2. Weekly\n";
-    $response .= "3. Monthly\n";    
-   
- }else if ($text == "2*2*4*1") { // User selected "Utilities" and "Umeme"
-    $response  = "CON Select Package\n ";
-    $response .= "1. Nova 1000/-\n";
-    $response .= "2. Basic 2000/-\n";
-    $response .= "3. Classic 3000/-\n";    
+}
+// Add Pay TV and Gas menus
+else if ($text == "2*2") {
+    // Show Pay TV options
+    $response  = "CON Select Pay TV Provider\n";
+    $response .= "1. DSTV\n";
+    $response .= "2. GOtv\n";
+    $response .= "3. Azam TV\n";
+    $response .= "4. Star Times\n";
+    $reponsse .= "5. YOTV\n";
+}
 
- }else if ($text == "2*2*4*2") { // User selected "Utilities" and "Umeme"
-    $response  = "CON Select Package\n ";
-    $response .= "1. Nova 3500/-\n";
-    $response .= "2. Basic 6600/-\n";
-    $response .= "3. Classic 12000/-\n"; 
+else if ($text == "2*3") {
+    // Show Gas service providers or options
+    $response  = "CON Select Gas Provider\n";
+    $response .= "1. Shell\n";
+    $response .= "2. Total\n";
+    $response .= "3. Moga\n";
 
- }else if ($text == "2*2*4*2") { // User selected "Utilities" and "Umeme"
-    $response  = "CON Select Package\n ";
-    $response .= "1. Nova 11000/-\n";
-    $response .= "2. Basic 20000/-\n";
-    $response .= "3. Classic 26000/-\n";    
- }
- else if ($text == "2*2*3") { // User selected "Utilities" and "Umeme"
-    $response  = "CON Select Package\n ";
-    $response .= "1. Pure(1 Week) 5000/-\n";
-    $response .= "2. Pure 130000/-\n";
-    $response .= "3. Plus 30000/-\n";
-    $response .= "4. Play 45000/-\n";    
- }else if($text == "2*2*5"){
-    $response = "CON Select Package\n";
-    $response .="1. 1 Hr 800/-\n";
-    $reponsse .="2. 1 Day 1,500/-\n";
-    $reponsse .="3. 1 Week 7500/-\n";
-    $response .="4. 1 Month 20000/-\n";
+}else if (strpos($text, "2*1*1*1") === 0) { // User selected "Utilities" and "Umeme" and entered account number
+    $accountNumber = substr($text, 8); // Extract the account number
+    if ($accountNumber != "") {
+        // Prompt the user to enter the loan amount
+        $response = "CON Enter the loan amount to credit to account $accountNumber:\n";
+    } else {
+        // Invalid account number, ask the user to enter it again
+        $response = "CON Please enter the account number:\n";
+    }
+} elseif (strpos($text, "2*1*1*1*") === 0) { // User entered the loan amount
+    $accountLoan = substr($text, 6); // Extract the account number and loan amount together
+    list($accountNumber, $loanAmount) = explode("*", $accountLoan);
 
-} else if ($text == "3") {
-    // Handle loan repayment logic
+    // Make sure to validate $accountNumber and $loanAmount as needed here
+
+    if ($accountNumber != "" && is_numeric($loanAmount) && (float)$loanAmount > 0) {
+        // Check if the loan amount is valid and the user is eligible
+
+        // You should implement logic to check eligibility here if needed
+
+        // Call the takeLoan function to process the loan request
+        $loanResult = takeLoan($conn, $phoneNumber, (float)$loanAmount);
+
+        if ($loanResult) {
+            // Loan request was successful
+            $response = "END Your loan request of Ugx $loanAmount has been approved and credited to account $accountNumber. Thank you!\n";
+        } else {
+            // Loan request failed for some reason
+            $response = "END Loan request failed. Please try again later or contact customer support.\n";
+        }
+    } else {
+        // Invalid input for account number or loan amount
+        $response = "END Invalid input. Please enter a valid account number and loan amount.\n";
+    }
+}
+
+elseif ($text == "3") {
+    // Handle loan repayment menu
     $loanAmount = fetchLoanAmount($conn, $phoneNumber);
     
     if ($loanAmount > 0) {
-        // The user has an outstanding loan to repay
+        // The user has an outstanding loan, so show loan repayment options
         $response  = "CON Repay Service Debt\n";
         $response .= "Your outstanding service debt amount is UGX $loanAmount.\n";
         $response .= "1. Repay Full Amount\n";
         $response .= "2. Repay Partial Amount\n";
         $response .= "0. Go back to Main Menu\n";
     } else {
-        // The user does not have an outstanding loan
+        // The user has no outstanding loan
         $response = "CON No outstanding service debt.\n";
         $response .= "0. Go back to Main Menu\n";
     }
-} else if ($text == "3*1") {
-    // User selected to repay the full loan amount
-    $loanAmount = fetchLoanAmount($conn, $phoneNumber);
-    
-    if ($loanAmount > 0) {
-        // Deduct the full loan amount from the user's account
-        // Implement the deduction logic based on your use case
-        $deductionSuccessful = deductFullLoanAmount($conn, $phoneNumber, $loanAmount);
-        
-        if ($deductionSuccessful) {
-            $response = "END Service repayment successful. Thank you!\n";
-        } else {
-            $response = "END Service repayment failed. Please try again later.\n";
-        }
+} elseif ($text == "3*1") {
+   // Fetch the current loan amount
+$loanAmount = fetchLoanAmount($conn, $phoneNumber);
+
+if ($loanAmount > 0) {
+    // The user has an outstanding loan, so you can proceed with a full loan payment
+    $amountToRepay = $loanAmount; // The full loan amount
+
+    // Call the fullLoanPayment function
+    $repaymentResult = fullLoanPayment($conn, $phoneNumber, $amountToRepay);
+
+    if ($repaymentResult) {
+        // The full loan payment was successful
+        $response ="END Full loan repayment successful. Loan has been paid in full.";
     } else {
-        // The user does not have an outstanding loan
-        $response = "END You do not have an outstanding Service debt.\n";
+        // The full loan payment failed for some reason
+        $reponsse=  "END Full loan repayment failed. Please try again later or contact customer support.";
     }
-} else if ($text == "3*2") {
-    // User selected to repay a partial loan amount
-    $response = "CON Enter the amount you want to repay:\n";
-} else if (is_numeric($text) && $text > 0) {
-    // User entered a numeric value for partial loan repayment
-    $partialRepaymentAmount = (float)$text;
-    
-    // Implement partial loan repayment logic based on your use case
-    $partialRepaymentSuccessful = makePartialRepayment($conn, $phoneNumber, $partialRepaymentAmount);
-    
-    if ($partialRepaymentSuccessful) {
-        $response = "END Partial  repayment of Ugx $partialRepaymentAmount was successful. Thank you!\n";
-    } else {
-        $response = "END Partial Service repayment failed. Please try again later.\n";
-    }
+} else {
+    // The user has no outstanding loan
+    echo "No outstanding loan to repay.";
 }
+
+} elseif ($text == "3*2") {
+   // Check if the user is eligible to make a partial loan repayment
+   $loanAmount = fetchLoanAmount($conn, $phoneNumber);
+
+   if ($loanAmount <= 0) {
+       $response = "END You have no outstanding loan to repay.\n";
+   } else {
+       $response = "CON Enter the amount you want to repay:\n";
+   }
+} else if (is_numeric($text) && $text > 0) {
+   // User entered a numeric value for partial loan repayment
+   $partialRepaymentAmount = (float)$text;
+   
+   // Implement partial loan repayment logic
+   $repaymentResult = makePartialRepayment($conn, $phoneNumber, $partialRepaymentAmount);
+   
+   if ($repaymentResult) {
+       $response = "END Partial repayment of Ugx $partialRepaymentAmount was successful. Thank you!\n";
+   } else {
+       $response = "END Partial loan repayment failed. Please try again later.\n";
+   }
+
+} elseif ($text == "0") {
+    // Allow the user to go back to the main menu from the loan repayment menu
+    $response = generateMainMenu();
+}
+ else {
+    // Handle other menu options or invalid input
+}
+
+
+
+
 // Close the database connection
 $conn->close(); 
 

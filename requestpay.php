@@ -1,7 +1,7 @@
 <?php
 // INCLUDE ACCESS TOKEN
 include "createaccesstoken.php";
-$phone = '256772295098';
+$phone = $phoneNumber;
 // Set the request URL
 $url = "https://sandbox.momodeveloper.mtn.com/collection/v1_0/requesttopay";
 // Set the headers

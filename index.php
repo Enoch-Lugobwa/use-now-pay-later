@@ -6,8 +6,7 @@ $phoneNumber = $_POST["phoneNumber"];
 $text        = $_POST["text"];
 
 require_once('functions.php');
-require_once('requestpay.php');
-require_once('bc-authorize.php');
+
 // Initialize the USSD response
 $response = "";
 
